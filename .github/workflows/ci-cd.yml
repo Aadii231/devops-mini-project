@@ -89,7 +89,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "k8s-rendered/*"
-          target: "/home/ec2-user/k8s-rendered"
+          target: "/home/ubuntu /k8s-rendered"
           strip_components: 1
 
       - name: Apply manifests and wait for rollout on kind cluster
@@ -100,12 +100,12 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
-            export KUBECONFIG=/home/ec2-user/.kube/config
+            export KUBECONFIG=/home/ubuntu /.kube/config
 
-            kubectl apply -f /home/ec2-user/k8s-rendered/00-namespace.yaml
-            kubectl apply -f /home/ec2-user/k8s-rendered/10-mongodb.yaml
-            kubectl apply -f /home/ec2-user/k8s-rendered/20-backend.yaml
-            kubectl apply -f /home/ec2-user/k8s-rendered/30-frontend.yaml
+            kubectl apply -f /home/ubuntu /k8s-rendered/00-namespace.yaml
+            kubectl apply -f /home/ubuntu /k8s-rendered/10-mongodb.yaml
+            kubectl apply -f /home/ubuntu /k8s-rendered/20-backend.yaml
+            kubectl apply -f /home/ubuntu /k8s-rendered/30-frontend.yaml
 
             kubectl rollout status deployment/backend -n mern-blog --timeout=120s
             kubectl rollout status deployment/frontend -n mern-blog --timeout=120s
