@@ -70,43 +70,39 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Substitute IMAGE_TAG into manifests
+      - name: Deploy to kind cluster on EC2 (git pull + kubectl apply over SSH)
+        uses: appleboy/ssh-action@v1.0.3
         env:
           IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
-        run: |
-          mkdir -p k8s-rendered
-          for f in k8s/*.yaml; do
-            sed "s/IMAGE_TAG/${IMAGE_TAG}/g" "$f" > "k8s-rendered/$(basename "$f")"
-          done
-
-      - name: Copy rendered manifests to EC2
-        uses: appleboy/scp-action@v0.1.7
+          REPO_URL: https://github.com/${{ github.repository }}.git
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "k8s-rendered/*"
-          target: "/home/ubuntu /k8s-rendered"
-          strip_components: 1
-          debug: true
-
-      - name: Apply manifests and wait for rollout on kind cluster
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: IMAGE_TAG,REPO_URL
           script: |
             set -e
-            export KUBECONFIG=/home/ubuntu /.kube/config
+            export KUBECONFIG=/home/ubuntu/.kube/config
 
-            kubectl apply -f /home/ubuntu /k8s-rendered/00-namespace.yaml
-            kubectl apply -f /home/ubuntu /k8s-rendered/10-mongodb.yaml
-            kubectl apply -f /home/ubuntu /k8s-rendered/20-backend.yaml
-            kubectl apply -f /home/ubuntu /k8s-rendered/30-frontend.yaml
+            if [ ! -d /home/ubuntu/devops-mini-project/.git ]; then
+              rm -rf /home/ubuntu/devops-mini-project
+              git clone "$REPO_URL" /home/ubuntu/devops-mini-project
+            fi
+
+            cd /home/ubuntu/devops-mini-project
+            git fetch origin main
+            git reset --hard origin/main
+
+            rm -rf /home/ubuntu/k8s-rendered
+            mkdir -p /home/ubuntu/k8s-rendered
+            for f in k8s/*.yaml; do
+              sed "s/IMAGE_TAG/${IMAGE_TAG}/g" "$f" > "/home/ubuntu/k8s-rendered/$(basename "$f")"
+            done
+
+            kubectl apply -f /home/ubuntu/k8s-rendered/00-namespace.yaml
+            kubectl apply -f /home/ubuntu/k8s-rendered/10-mongodb.yaml
+            kubectl apply -f /home/ubuntu/k8s-rendered/20-backend.yaml
+            kubectl apply -f /home/ubuntu/k8s-rendered/30-frontend.yaml
 
             kubectl rollout status deployment/backend -n mern-blog --timeout=120s
             kubectl rollout status deployment/frontend -n mern-blog --timeout=120s
