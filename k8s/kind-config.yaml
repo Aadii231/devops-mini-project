@@ -1,0 +1,14 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: devops-cluster
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      # Frontend: kind NodePort 30000 -> EC2 host port 3000 (matches old compose "3000:3000")
+      - containerPort: 30000
+        hostPort: 3000
+        protocol: TCP
+      # Backend: kind NodePort 30001 -> EC2 host port 5001 (matches old compose "5001:5000")
+      - containerPort: 30001
+        hostPort: 5001
+        protocol: TCP

@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Prometheus scraping itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # EC2 instance-level metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+        labels:
+          instance_role: 'ec2-dev-node'
+
+  # Application-level metrics (backend exposes /metrics via prom-client)
+  # Reachable on the host at 5001 because kind's extraPortMappings expose
+  # the backend NodePort (30001) on the EC2 host as port 5001.
+  - job_name: 'backend-app'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:5001']
+        labels:
+          app: 'mern-backend'

@@ -1,0 +1,186 @@
+# **🚀 MERN Blog Application – Docker Setup (Without Docker Compose)**
+
+This guide explains how to run the **Frontend (React/Vite)**, **Backend (Node.js)**, and **MongoDB** using **Docker commands only**.
+
+---
+
+## 📁 Project Structure
+
+```
+mern-blog-V1/
+ ├── client/        # React (Vite) frontend
+ ├── server/        # Node.js backend
+```
+
+---
+
+## 🐳 Prerequisites
+
+* Docker installed
+* Docker running
+
+---
+
+# 🟢 Step 1: Create Docker Network
+
+All containers must be on the same network to communicate.
+
+```bash
+docker network create mongo-net
+```
+
+---
+
+# 🟢 Step 2: Run MongoDB Container
+
+```bash
+docker run -d --name mongodb  --network mongo-net -p 27017:27017  mongo
+```
+
+📌 This stores MongoDB data in your local folder.
+
+---
+
+# 🟢 Step 3: Build Backend Image
+
+```bash
+docker build -t backend .
+```
+
+---
+
+# 🟢 Step 4: Run Backend Container
+
+```bash
+docker run -d  --name backend  --network mongo-net  -p 5000:5000 backend
+```
+
+📌 Backend connects to MongoDB using container name `mongodb`.
+
+---
+
+# 🟢 Step 5: Build Frontend Image
+
+```bash
+docker build -t frontend:01 .
+```
+
+---
+
+# 🟢 Step 6: Run Frontend Container
+
+```bash
+docker run -d --name frontend --network mongo-net  -p 3000:3000  frontend:01
+```
+
+---
+
+# 🌐 Access Application
+
+* Frontend → http://localhost:3000
+* Backend → http://localhost:5000
+* MongoDB → localhost:27017
+
+---
+
+# 🧪 Useful Commands
+
+## View running containers
+
+```bash
+docker ps
+```
+
+## View logs
+
+```bash
+docker logs backend
+docker logs frontend
+docker logs mongodb
+```
+
+## Access container shell
+
+```bash
+docker exec -it backend sh
+docker exec -it mongodb bash
+```
+
+---
+
+# 🛑 Stop Containers
+
+```bash
+docker stop frontend backend mongodb
+```
+
+---
+
+# ❌ Remove Containers
+
+```bash
+docker rm frontend backend mongodb
+```
+
+---
+
+# ❌ Remove Images
+
+```bash
+docker rmi frontend backend
+```
+
+---
+
+# ⚠️ Common Issues
+
+## 1. MongoDB connection error
+
+✔ Ensure containers are on same network
+✔ Use:
+
+```
+mongodb://mongodb:27017
+```
+
+---
+
+## 2. Frontend shows 404
+
+✔ If using Vite → ensure `dist/` is served (not `build/`)
+
+---
+
+## 3. Port already in use
+
+Change ports:
+
+```bash
+-p 3000:3000
+```
+
+---
+
+# 💡 Notes
+
+* This setup is for **learning and development**
+* For production:
+
+  * Use optimized images (nginx for frontend)
+  * Avoid bind mounts for databases
+  * Use orchestration tools
+
+---
+
+# 🎯 Summary
+
+You manually created:
+
+* Docker network
+* MongoDB container
+* Backend container
+* Frontend container
+
+This helps understand how Docker works internally before using automation tools.
+
+---
