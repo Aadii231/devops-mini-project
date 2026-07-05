@@ -91,6 +91,7 @@ jobs:
           source: "k8s-rendered/*"
           target: "/home/ubuntu /k8s-rendered"
           strip_components: 1
+          debug: true
 
       - name: Apply manifests and wait for rollout on kind cluster
         uses: appleboy/ssh-action@v1.0.3
